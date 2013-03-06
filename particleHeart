@@ -1,0 +1,207 @@
+
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Particles</title>
+<link type="text/css" href="styles.css" rel="stylesheet" media="screen" />
+<script type="text/javascript">
+	var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl."
+			: "http://www.");
+	document
+			.write(unescape("%3Cscript src='"
+					+ gaJsHost
+					+ "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+<script type="text/javascript">
+	try {
+		var pageTracker = _gat._getTracker("UA-15240703-1");
+		pageTracker._trackPageview();
+	} catch (err) {
+	}
+</script>
+</head>
+<body style="overflow: hidden">
+<audio autoplay="autoplay">
+	<source src="the shows.mp3"></source>
+</audio>
+<canvas id="projector" width="100" height="100%">Your browser does not support the Canvas element.</canvas>
+
+<script type="text/javascript">
+	var VELOCITY = 1;
+	var num_particles = 200;
+
+	var mouse = {
+		x : 0,
+		y : 0
+	};
+	var particles = [];
+	var colors = [ "#E6FFFF", "#DA95ED", "#95EDC9" ];
+	var coolColors = [ "#E6FFFF", "#DA95ED", "#95EDC9" ];
+	var heartColors = [ "#F27979", "#FFD6D6", "#B31717" ];
+	var canvas = document.getElementById('projector');
+	var context;
+	var count = 0;
+	if (canvas && canvas.getContext) {
+		context = canvas.getContext('2d');
+		for ( var i = 0; i < num_particles; i++) {
+			particles.push({
+				x : Math.random() * window.innerWidth,
+				y : Math.random() * window.innerHeight,
+				originX : 0,
+				originY : 0,
+				vx : ((Math.random() * (VELOCITY * 2)) - VELOCITY) + 1,
+				vy : ((Math.random() * (VELOCITY * 2)) - VELOCITY) + 2,
+				size : 1 + Math.random() * 6,
+				currentSize : 0,
+				accel : false,
+				lock : false,
+				color : colors[Math.floor(Math.random() * colors.length)]
+			});
+		}
+		Initialize();
+	}
+
+	function Initialize() {
+		canvas.addEventListener('mousemove', MouseMove, false);
+		window.addEventListener('mousedown', MouseDown, false);
+		window.addEventListener('mouseup', MouseUp, false);
+		window.addEventListener('resize', ResizeCanvas, false);
+		setInterval(TimeUpdate, 20);
+		ResizeCanvas();
+	}
+	
+	
+	
+	function TimeUpdate(e) {
+		context.clearRect(0, 0, window.innerWidth, window.innerHeight);
+		context.fillStyle = '#000000'; // set canvas background color
+		context.fillRect(0, 0, window.innerWidth, window.innerHeight); // now fill the canvas
+		var len = particles.length;
+		var particle;
+
+		for ( var i = 0; i < len; i++) {
+			particle = particles[i];
+			flicker(particle);
+
+			if (particle.accel) {
+				particle.x *= .9;
+				particle.y *= .9;
+			}
+			if (!particle.lock) {
+				border(particle);
+				particle.originX += particle.vx;
+				particle.originY += particle.vy;
+			}
+			if (Math.random() > .06) {
+				drawPart(particle);
+			}
+		}
+	}
+	function drawPart(particle) {
+		context.fillStyle = particle.color;
+		context.beginPath();
+		context.arc(particle.originX + particle.x, particle.originY
+				+ particle.y, particle.currentSize, 0, Math.PI * 2, true);
+		context.closePath();
+		context.fill();
+	}
+
+	function flicker(particle) {
+		if (particle.currentSize < .1) {
+			if (Math.random() < .03) {
+				particle.currentSize = Math.random() * 25;
+			}
+		} else {
+			particle.currentSize *= .94;
+		}
+	}
+	function border(particle) {
+		if (particle.originX > window.innerWidth) {
+			particle.originX = 0;
+		} else if (particle.originX < 0) {
+			particles.originX = window.innerWidth;
+		} else {
+		}
+
+		if (particle.originY > window.innerHeight) {
+			particle.originY = 0;
+		} else if (particle.originY < 0) {
+			particle.originY = window.innerHeight;
+		} else {
+		}
+	}
+	function MouseMove(e) {
+		mouse.x = e.layerX;
+		mouse.y = e.layerY;
+	}
+
+	function MouseDown(e) {
+		count++;
+		if (count % 3 == 0) {
+			Circle(mouse.x, mouse.y);
+		} else if (count % 3 == 1) {
+			Heart(mouse.x, mouse.y);
+		} else {
+			Scatter();
+		}
+	}
+	function MouseUp(e) {
+		var len = particles.length;
+		var particle;
+		for ( var i = 0; i < len; i++) {
+			particle = particles[i];
+			particle.lock = false;
+		}
+	}
+	function ResizeCanvas(e) {
+		canvas.width = window.innerWidth;
+		canvas.height = window.innerHeight;
+	}
+
+	function DistanceBetween(p1, p2) {
+		var dx = p2.x - p1.x;
+		var dy = p2.y - p1.y;
+		return Math.sqrt(dx * dx + dy * dy);
+	}
+	
+	//!! SHAPES   !!!
+	function shapeAll(x, y, xfunc, yfunc, size, cs, l) {
+		var len = particles.length;
+		var particle;
+		for ( var i = 0; i < len; i++) {
+			particle = particles[i];
+			var px = particle.originX + particle.x;
+			var py = particle.originY + particle.y;
+			var t = Math.random() * Math.PI * 2;
+			particle.originX = x + size * xfunc(t) + Math.random() * 20;
+			particle.originY = y + size * yfunc(t) + Math.random() * 20;
+			particle.x = px - particle.originX;
+			particle.y = py - particle.originY;
+			particle.color = cs[Math.floor(Math.random() * cs.length)]
+			particle.accel = true;
+			particle.lock = l;
+		}
+	}
+	// BLEH X_X
+	function Scatter() {
+		var rcolors = [];
+		for (var i = 0; i < 4; i++) {
+			rcolors.push("#"+((1<<24)*Math.random()|0).toString(16));
+		}
+		shapeAll(0,0, ScatterXFunc, ScatterYFunc, 1, rcolors, false);
+	}
+	function ScatterXFunc(t) {return Math.random() * window.innerWidth;}
+	function ScatterYFunc(t) {return Math.random() * window.innerHeight;}
+	//HEARTS <3
+	function Heart(x, y) {shapeAll(x, y, HeartXFunc, HeartYFunc, 4 + Math.random() * 30,heartColors, true);}
+	function HeartXFunc(t) {return 16 * Math.sin(t) * Math.sin(t) * Math.sin(t);}
+	function HeartYFunc(t) {return -((13 * Math.cos(t)) - (5 * Math.cos(2 * t))	- (2 * Math.cos(3 * t)) - Math.cos(4 * t));}
+	
+	//CIRCLES :)
+	function Circle(x, y) {	shapeAll(x, y, CircleXFunc, CircleYFunc, 100 + Math.random() * 300,	coolColors, true);}
+	function CircleXFunc(t) {return Math.cos(t);}
+	function CircleYFunc(t) {return Math.sin(t);}
+</script>
+</body>
+</html>
